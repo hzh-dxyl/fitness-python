@@ -81,7 +81,7 @@ class Pullups(Fitness):
             # 在视频上显示完成个数
             cv2.putText(img, str(int(count)), (100, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
-            return dir, count
+        return dir, count
 
 
 class Situp(Fitness):
@@ -130,30 +130,36 @@ class Pushup(Fitness):
     '''
 
     def check_pose(self, detector, img, dir, count):
-        # 方向与个数# 0为下，1为上
-        h, w, c = img.shape
         # 识别姿势
         img = detector.find_pose(img, draw=True)
         # 获取姿势数据
         positions = detector.find_positions(img)
-
+        # 方向与个数# 1为下，0为上
+        h, w, c = img.shape
+        
         if positions:
+            rectw = w//8
+            if rectw<=100:
+                rectw=100
             # 获取俯卧撑的角度
             angle1 = detector.find_angle(img, 12, 24, 26)
             angle2 = detector.find_angle(img, 12, 14, 16)
             # 进度条长度
-            bar = np.interp(angle2, (45, 150), (w // 2 - 100, w // 2 + 100))
-            cv2.rectangle(img, (w // 2 - 100, h - 150),
-                          (int(bar), h - 100), (0, 255, 0), cv2.FILLED)
-            # 角度小于50度认为撑下
-            if angle2 <= 50 and angle1 >= 165 and angle1 <= 175:
+            bar = np.interp(angle2, (45, 150), (0,rectw*2))
+            cv2.rectangle(img, (w // 2 - rectw, h - 150),
+                          (w//2+rectw, h - 100), (0, 255, 0), 2)
+            cv2.rectangle(img, (w // 2 - rectw, h - 150),
+                          (int(bar)+w//2-rectw, h - 100), (0, 255, 0), cv2.FILLED)
+            # 角度小于60度认为撑下
+            if angle2 <= 60 and angle1 >= 160:
                 if dir == 0:
                     count = count + 0.5
                     dir = 1
             # 角度大于125度认为撑起
-            if angle2 >= 125 and angle1 >= 165 and angle1 <= 175:
+            if angle2 >= 125 and angle1 >= 160:
                 if dir == 1:
                     count = count + 0.5
                     dir = 0
-            cv2.putText(img, str(int(count)), (w // 2, h // 2),
-                        cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 20, cv2.LINE_AA)
+            cv2.putText(img, str(int(count)), (100, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
+        return dir, count
