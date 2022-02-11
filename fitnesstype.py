@@ -1,4 +1,5 @@
 from abc import abstractclassmethod
+import time
 import cv2
 import numpy as np
 from poseutil import PoseDetector
@@ -26,6 +27,8 @@ class Factory():
             return Pushup()
         if name == 'squat':
             return Squat()
+        if name == 'plank':
+            return Plank()
 
 
 class Pullups(Fitness):
@@ -206,3 +209,48 @@ class Squat(Fitness):
             cv2.putText(img, str(int(count)), (100, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
         return dir, count
+
+
+class Plank(Fitness):
+    '''
+    平板支撑类
+    '''
+
+    def check_pose(self, detector, img, currTime, count):
+        # 识别姿势
+        img = detector.find_pose(img, draw=True)
+        # 获取姿势数据
+        positions = detector.find_positions(img)
+        h, w, c = img.shape
+
+        if positions:
+            rectw = w//8
+            if rectw <= 100:
+                rectw = 100
+            # 获取腰部的角度
+            angle1 = detector.find_angle(img, 11, 23, 25)
+            # 获取肘部的角度
+            angle2 = detector.find_angle(img, 11, 13, 15)
+
+            temp = time.time()
+            # 角度小于60度认为撑下
+            if angle1 <= 180 and angle1 >= 150:
+                if angle2 >= 70 and angle2 <= 110:
+                    count += temp - currTime
+            currTime = temp
+            min = int(count//60)
+            sec = int(count % 60)
+            if min >= 60:
+                min = 0
+            if(min < 10):
+                str1 = '0'+str(min)
+            else:
+                str1 = str(min)
+            if(sec < 10):
+                str2 = '0'+str(sec)
+            else:
+                str2 = str(sec)
+
+            cv2.putText(img, str1 + ' : ' + str2, (100, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
+        return currTime, count

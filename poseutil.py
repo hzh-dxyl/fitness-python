@@ -10,7 +10,7 @@ class PoseDetector():
                  static_image_mode=False,
                  upper_body_only=False,
                  smooth_landmarks=True,
-                 min_detection_confidence=0.5,
+                 min_detection_confidence=0.8,
                  min_tracking_confidence=0.5):
         '''
         初始化
