@@ -24,6 +24,8 @@ class Factory():
             return Situp()
         if name == 'pushup':
             return Pushup()
+        if name == 'squat':
+            return Squat()
 
 
 class Pullups(Fitness):
@@ -98,8 +100,8 @@ class Situp(Fitness):
 
         if positions:
             rectw = w//8
-            if rectw<=100:
-                rectw=100
+            if rectw <= 100:
+                rectw = 100
             # 获取仰卧起坐的角度
             angle1 = detector.find_angle(img, 27, 25, 23)
             angle2 = detector.find_angle(img, 25, 23, 11)
@@ -136,16 +138,16 @@ class Pushup(Fitness):
         positions = detector.find_positions(img)
         # 方向与个数# 1为下，0为上
         h, w, c = img.shape
-        
+
         if positions:
             rectw = w//8
-            if rectw<=100:
-                rectw=100
+            if rectw <= 100:
+                rectw = 100
             # 获取俯卧撑的角度
             angle1 = detector.find_angle(img, 12, 24, 26)
             angle2 = detector.find_angle(img, 12, 14, 16)
             # 进度条长度
-            bar = np.interp(angle2, (45, 150), (0,rectw*2))
+            bar = np.interp(angle2, (45, 150), (0, rectw*2))
             cv2.rectangle(img, (w // 2 - rectw, h - 150),
                           (w//2+rectw, h - 100), (0, 255, 0), 2)
             cv2.rectangle(img, (w // 2 - rectw, h - 150),
@@ -157,6 +159,47 @@ class Pushup(Fitness):
                     dir = 1
             # 角度大于125度认为撑起
             if angle2 >= 125 and angle1 >= 160:
+                if dir == 1:
+                    count = count + 0.5
+                    dir = 0
+            cv2.putText(img, str(int(count)), (100, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
+        return dir, count
+
+
+class Squat(Fitness):
+    '''
+    深蹲类
+    '''
+
+    def check_pose(self, detector, img, dir, count):
+        # 识别姿势
+        img = detector.find_pose(img, draw=True)
+        # 获取姿势数据
+        positions = detector.find_positions(img)
+        # 方向与个数# 1为下，0为上
+        h, w, c = img.shape
+
+        if positions:
+            rectw = w//8
+            if rectw <= 100:
+                rectw = 100
+            # 获取俯卧撑的角度
+            angle1 = detector.find_angle(img, 24, 26, 28)
+            angle2 = detector.find_angle(img, 23, 25, 27)
+            # 进度条长度
+            bar = np.interp((angle1+angle2)//2, (90, 130), (rectw*2, 0))
+            cv2.rectangle(img, (w // 2 - rectw, h - 150),
+                          (w//2+rectw, h - 100), (0, 255, 0), 2)
+            cv2.rectangle(img, (w // 2 - rectw, h - 150),
+                          (int(bar)+w//2-rectw, h - 100), (0, 255, 0), cv2.FILLED)
+            # 角度小于60度认为撑下
+            if angle1 <= 90 and angle2 <= 90:
+                if dir == 0:
+                    count = count + 0.5
+                    dir = 1
+            # 角度大于125度认为撑起
+            if angle2 >= 130 and angle1 >= 130:
                 if dir == 1:
                     count = count + 0.5
                     dir = 0
