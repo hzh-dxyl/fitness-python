@@ -31,6 +31,8 @@ class Factory():
             return Plank()
         if name == 'lunge':
             return Lunge()
+        if name == 'dips':
+            return Dips()
 
 
 class Pullups(Fitness):
@@ -257,6 +259,7 @@ class Plank(Fitness):
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
         return currTime, count
 
+
 class Lunge(Fitness):
     '''
     箭步蹲类
@@ -279,13 +282,69 @@ class Lunge(Fitness):
             angle2 = detector.find_angle(img, 24, 26, 28)
 
             if angle1 <= 90 and angle1 <= 90:
-                if dir==0:
+                if dir == 0:
                     count += 0.5
                     dir = 1
-            if angle1 >= 160 and angle2 >=160:
-                if dir==1:
+            if angle1 >= 160 and angle2 >= 160:
+                if dir == 1:
                     count += 0.5
                     dir = 0
+            cv2.putText(img, str(int(count)), (100, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
+        return dir, count
+
+
+class Dips(Fitness):
+    '''
+    杠端臂屈伸类
+    '''
+
+    def check_pose(self, detector, img, dir, count):
+        # 识别姿势
+        img = detector.find_pose(img, draw=True)
+        # 获取姿势数据
+        positions = detector.find_positions(img)
+        h, w, c = img.shape
+
+        if positions:
+            rectw = w//8
+            if rectw <= 100:
+                rectw = 100
+            # 获取左手肘的角度
+            angle1 = detector.find_angle(img, 11, 13, 15)
+            # 获取右手肘的角度
+            angle2 = detector.find_angle(img, 12, 14, 16)
+            # 获取左肩的角度
+            angle3 = detector.find_angle(img, 23, 11, 13)
+            # 获取右肩的角度
+            angle4 = detector.find_angle(img, 24, 12, 14)
+
+            bar1 = np.interp(angle1, (70, 160), (h//2, 0))
+            bar2 = np.interp(angle2, (70, 160), (h//2, 0))
+
+            cv2.rectangle(img, (w//5-12, h//2-100),
+                          (w//5+12, h-100), (0, 255, 0), 3)
+            cv2.rectangle(img, (w//5-12, h-100-int(bar2)),
+                          (w//5+12, h-100), (0, 255, 0), cv2.FILLED)
+            cv2.putText(img, str(int(np.interp(angle2, (70, 160), (100, 0)))) + '%', (w//5-24, h-70),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
+            cv2.rectangle(img, (w//5*4-12, h//2-100),
+                          (w//5*4+12, h-100), (0, 255, 0), 3)
+            cv2.rectangle(img, (w//5*4-12, h-100-int(bar1)),
+                          (w//5*4+12, h-100), (0, 255, 0), cv2.FILLED)
+            cv2.putText(img, str(int(np.interp(angle1, (70, 160), (100, 0)))) + '%', (w//5*4-24, h-70),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
+            if angle1 >= 160 and angle2 >= 160 and angle3 <= 60 and angle4 <= 60:
+                if dir == 0:
+                    count += 0.5
+                    dir = 1
+            if angle1 <= 90 and angle2 <= 90 and angle3 >= 60 and angle4 >= 60:
+                if dir == 1:
+                    count += 0.5
+                    dir = 0
+
             cv2.putText(img, str(int(count)), (100, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
         return dir, count
