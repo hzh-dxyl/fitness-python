@@ -29,6 +29,8 @@ class Factory():
             return Squat()
         if name == 'plank':
             return Plank()
+        if name == 'lunge':
+            return Lunge()
 
 
 class Pullups(Fitness):
@@ -254,3 +256,36 @@ class Plank(Fitness):
             cv2.putText(img, str1 + ' : ' + str2, (100, 100),
                         cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
         return currTime, count
+
+class Lunge(Fitness):
+    '''
+    箭步蹲类
+    '''
+
+    def check_pose(self, detector, img, dir, count):
+        # 识别姿势
+        img = detector.find_pose(img, draw=True)
+        # 获取姿势数据
+        positions = detector.find_positions(img)
+        h, w, c = img.shape
+
+        if positions:
+            rectw = w//8
+            if rectw <= 100:
+                rectw = 100
+            # 获取右膝盖的角度
+            angle1 = detector.find_angle(img, 23, 25, 27)
+            # 获取左膝盖的角度
+            angle2 = detector.find_angle(img, 24, 26, 28)
+
+            if angle1 <= 90 and angle1 <= 90:
+                if dir==0:
+                    count += 0.5
+                    dir = 1
+            if angle1 >= 160 and angle2 >=160:
+                if dir==1:
+                    count += 0.5
+                    dir = 0
+            cv2.putText(img, str(int(count)), (100, 100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 255), 4)
+        return dir, count
